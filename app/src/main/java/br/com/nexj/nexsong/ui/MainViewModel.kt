@@ -317,6 +317,35 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
         learnFrom(listOf(song), genre)
     }
 
+    /** Define o gênero de várias músicas de uma vez (conta como confirmação). */
+    fun setGenreForSongs(list: List<Song>, genre: Genre) {
+        if (list.isEmpty()) return
+        val ids = list.map { it.id }.toSet()
+        overrides.setSongs(list.map { it.id }, list.map { genre.id })
+        songs = songs.map {
+            if (it.id in ids) it.copy(genre = genre, source = "você", confirmed = true) else it
+        }
+        learnFrom(list, genre)
+    }
+
+    /**
+     * Prepara a movimentação só das músicas escolhidas para a pasta do gênero (Android 11+).
+     * Devolve o pedido de permissão do Android, ou null se não houver nada para mover.
+     */
+    fun prepareMoveSongs(list: List<Song>, genre: Genre): IntentSender? {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.R) return null
+        val target = organizer.targetPath(genre)
+        val plan = list.filter { it.relativePath != target }.take(MOVE_BATCH).map { it.copy(genre = genre) }
+        if (plan.isEmpty()) return null
+        return try {
+            val sender = organizer.writeRequest(plan.map { it.uri })
+            pendingMove = plan
+            sender
+        } catch (e: Exception) {
+            null
+        }
+    }
+
     fun confirmAllSuggestions() {
         val pending = songs.filter { !it.confirmed }
         if (pending.isEmpty()) return

@@ -51,6 +51,8 @@ class MediaScanner(private val context: Context) {
                 val relativePath = c.getString(iPath).orEmpty()
                 // Cópias criadas pelo próprio app não entram na biblioteca.
                 if (relativePath.startsWith(FolderOrganizer.COPIES_ROOT)) continue
+                // Áudios e notas de voz do WhatsApp não são músicas: ficam de fora da biblioteca.
+                if (relativePath.contains("whatsapp", ignoreCase = true)) continue
 
                 val displayName = c.getString(iName).orEmpty()
                 var title = c.getString(iTitle).orEmpty()

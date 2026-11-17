@@ -89,6 +89,43 @@ fun GenrePickerDialog(
     )
 }
 
+/** Escolha de gênero para várias músicas, com opção de já mover os arquivos para a pasta do gênero. */
+@Composable
+fun BulkGenreDialog(
+    count: Int,
+    genres: List<Genre>,
+    onDismiss: () -> Unit,
+    onConfirm: (Genre, Boolean) -> Unit
+) {
+    val canMove = Build.VERSION.SDK_INT >= Build.VERSION_CODES.R
+    var move by remember { mutableStateOf(canMove) }
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Gênero de $count músicas") },
+        text = {
+            Column(Modifier.verticalScroll(rememberScrollState())) {
+                if (canMove) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.clickable { move = !move }
+                    ) {
+                        Checkbox(checked = move, onCheckedChange = { move = it })
+                        Text(
+                            "Também mover os arquivos para a pasta do gênero",
+                            style = MaterialTheme.typography.bodyMedium
+                        )
+                    }
+                }
+                genres.forEach { genre ->
+                    TextButton(onClick = { onConfirm(genre, move && canMove) }) { Text(genre.label) }
+                }
+            }
+        },
+        confirmButton = {},
+        dismissButton = { TextButton(onClick = onDismiss) { Text("Cancelar") } }
+    )
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun OrganizeScreen(

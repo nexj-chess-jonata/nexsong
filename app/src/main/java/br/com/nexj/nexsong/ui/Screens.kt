@@ -1,5 +1,9 @@
 package br.com.nexj.nexsong.ui
 
+import android.app.Activity
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.IntentSenderRequest
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
@@ -93,6 +97,12 @@ fun LibraryScreen(
     var editing by remember { mutableStateOf<Song?>(null) }
     var selected by remember { mutableStateOf<Set<Long>>(emptySet()) }
     var showFilters by remember { mutableStateOf(false) }
+    var bulkGenre by remember { mutableStateOf(false) }
+    val moveLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.StartIntentSenderForResult()
+    ) { result ->
+        if (result.resultCode == Activity.RESULT_OK) vm.confirmMove() else vm.cancelPending()
+    }
     val tabs = remember(vm.songs, vm.genres) {
         listOf<Genre?>(null) + vm.genres.filter { genre -> vm.songs.any { it.genre == genre } }
     }
@@ -116,6 +126,8 @@ fun LibraryScreen(
                         }
                     },
                     actions = {
+                        TextButton(onClick = { selected = visible.map { it.id }.toSet() }) { Text("Todas") }
+                        TextButton(onClick = { bulkGenre = true }) { Text("Gênero") }
                         TextButton(onClick = {
                             vm.editingIds = selected
                             selected = emptySet()
@@ -218,6 +230,26 @@ fun LibraryScreen(
             onPick = { genre, applyToArtist ->
                 vm.setGenre(song, genre, applyToArtist)
                 editing = null
+            }
+        )
+    }
+
+    if (bulkGenre) {
+        BulkGenreDialog(
+            count = selected.size,
+            genres = vm.genres,
+            onDismiss = { bulkGenre = false },
+            onConfirm = { genre, move ->
+                val chosen = vm.songs.filter { it.id in selected }
+                bulkGenre = false
+                selected = emptySet()
+                vm.setGenreForSongs(chosen, genre)
+                if (move) {
+                    val sender = vm.prepareMoveSongs(chosen, genre)
+                    if (sender != null) {
+                        moveLauncher.launch(IntentSenderRequest.Builder(sender).build())
+                    }
+                }
             }
         )
     }

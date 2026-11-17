@@ -12,7 +12,7 @@ import java.util.Locale
  *  2. correção do usuário para o artista
  *  3. pasta já organizada pelo NexSong
  *  4. tag de gênero do arquivo
- *  5. base local de artistas
+ *  5. base local de artistas (pelo campo artista; depois pelo nome do arquivo, como sugestão)
  *  6. nome da pasta (vira sugestão, aguarda confirmação)
  *  7. nome do artista começando com "MC" (sugestão de Funk)
  *  8. Outros
@@ -135,6 +135,10 @@ object GenreClassifier {
 
         fromTag(song.tagGenre, genres)?.let { return Result(it, "tag", true) }
         fromArtist(song.artist, genres)?.let { return Result(it, "artista", true) }
+        // Nome do artista no começo do nome do arquivo ("Artista - Música.mp3") quando a tag está errada.
+        val base = song.displayName.substringBeforeLast('.')
+        (fromArtist(base.substringBefore(" - "), genres) ?: fromArtist("$base ${song.title}", genres))
+            ?.let { return Result(it, "nome do arquivo", false) }
         fromPath(song.relativePath, genres)?.let { return Result(it, "nome da pasta", false) }
 
         val funk = genres["funk"]

@@ -13,7 +13,8 @@ object ArtistDictionary {
         "Nelson Cavaquinho", "Os Originais do Samba", "Almir Guineto", "Bezerra da Silva",
         "Leci Brandão", "Diogo Nogueira", "Monarco", "Wilson das Neves", "Xande de Pilares",
         "Demônios da Garoa", "João Nogueira", "Roberto Ribeiro", "Candeia", "Teresa Cristina",
-        "Maria Rita Samba", "Benito di Paula", "Agepê", "Neguinho da Beija-Flor"
+        "Maria Rita Samba", "Benito di Paula", "Agepê", "Neguinho da Beija-Flor",
+        "Jovelina Pérola Negra", "Luiz Carlos da Vila", "Sombrinha", "Mart'nália", "Moacyr Luz", "Nei Lopes", "Zé Katimba", "Leandro Sapucahy", "Marquinhos Satã", "Luiz Américo", "Alaíde Costa", "Velha Guarda da Portela", "Grupo Fundo de Quintal", "Quinteto em Branco e Preto"
     )
 
     private val pagode = listOf(
@@ -22,7 +23,8 @@ object ArtistDictionary {
         "Péricles", "Art Popular", "Katinguelê", "Soweto", "Só Pra Contrariar",
         "Turma do Pagode", "Ferrugem", "Dilsinho", "Jeito Moleque", "Os Travessos",
         "Harmonia do Samba", "Imaginasamba", "Bom Gosto", "Swing e Simpatia", "Di Propósito",
-        "Vou pro Sereno", "Grupo Raça", "Karametade", "Sem Compromisso", "Alexandre Pires"
+        "Vou pro Sereno", "Grupo Raça", "Karametade", "Sem Compromisso", "Alexandre Pires",
+        "Rodriguinho", "Grupo Clareou", "Menos é Mais", "Grupo Pixote", "Turma do Pagode"
     )
 
     private val sertanejo = listOf(
@@ -42,7 +44,8 @@ object ArtistDictionary {
         "Thaeme & Thiago", "Fiduma & Jeca", "Felipe Araújo", "Murilo Huff", "Zé Felipe",
         "Jads & Jadson", "Hugo Pena & Gabriel", "Cleber & Cauan", "Lucas Lucco",
         "Diego & Victor Hugo", "Luíza & Maurílio", "Gustavo Mioto", "Naiara Azevedo",
-        "Roberta Miranda", "Leonardo"
+        "Roberta Miranda", "Leonardo",
+        "Chrystian & Ralf", "Milionário & José Rico", "Tião Carreiro & Pardinho", "Pena Branca & Xavantinho", "Sérgio Reis", "Almir Sater", "Rionegro & Solimões", "João Paulo & Daniel", "César Menotti & Fabiano", "Edson & Hudson", "Gino & Geno", "Di Paullo & Paulino", "Matogrosso & Mathias", "João Mineiro & Marciano", "Eduardo Costa", "Michel Teló", "Fernando & Sorocaba", "Luan Santana", "Henrique & Juliano", "Marília Mendonça", "Maiara & Maraisa", "Simone & Simaria", "Ana Castela", "Zé Neto & Cristiano", "Lucas Lucco", "Israel & Rodolffo", "Hugo & Guilherme", "Matheus & Kauan", "Cleber & Cauan", "Victor & Leo", "Daniel", "Rick & Renner", "Gian & Giovani", "Bruno & Barretto", "Cezar & Paulinho", "Trio Parada Dura"
     )
 
     private val rock = listOf(
@@ -63,7 +66,8 @@ object ArtistDictionary {
         "Pantera", "Ramones", "The Clash", "Sex Pistols", "Lynyrd Skynyrd", "ZZ Top",
         "Whitesnake", "Mötley Crüe", "Skid Row", "Judas Priest", "Motörhead", "Rammstein",
         "Evanescence", "Nickelback", "Blink-182", "The Offspring", "Weezer",
-        "Arctic Monkeys", "The Strokes", "Muse", "Kings of Leon", "Elvis Presley"
+        "Arctic Monkeys", "The Strokes", "Muse", "Kings of Leon", "Elvis Presley",
+        "Skank", "Detonautas", "Jota Quest", "Charlie Brown Jr", "NX Zero", "Pitty", "Raimundos", "Biquini Cavadão", "Kid Abelha", "Ultraje a Rigor", "Engenheiros do Hawaii", "Plebe Rude", "Camisa de Vênus", "Ira", "Barão Vermelho", "Cássia Eller", "Rita Lee", "Eric Clapton", "Dire Straits", "Eagles", "Creedence Clearwater Revival", "Deep Purple", "Scorpions", "Bon Jovi", "Aerosmith", "Lenny Kravitz", "Santana"
     )
 
     private val forro = listOf(
@@ -75,7 +79,8 @@ object ArtistDictionary {
         "Cavaleiros do Forró", "Taty Girl", "Os Três do Nordeste", "Sivuca", "Genival Lacerda",
         "Frank Aguiar", "Barões da Pisadinha", "Os Barões da Pisadinha", "Zé Vaqueiro",
         "Ávine Vinny", "Waldonys", "Joquinha Gonzaga", "Forró Pegado", "Tarcísio do Acordeon",
-        "Iguinho e Lulinha", "Desejo de Menina", "Banda Magníficos", "Dorgival Dantas"
+        "Iguinho e Lulinha", "Desejo de Menina", "Banda Magníficos", "Dorgival Dantas",
+        "Anastácia", "Chico César", "Targino Gondim", "Pinto do Acordeon", "Santanna", "Cezzinha", "Nando Cordel", "Quinteto Violado"
     )
 
     private val mpb = listOf(
@@ -149,7 +154,8 @@ object ArtistDictionary {
         "Selena Gomez", "Miley Cyrus", "Olivia Rodrigo", "Bad Bunny", "Luis Fonsi",
         "Enrique Iglesias", "Ricky Martin", "Stevie Wonder", "Lionel Richie", "Phil Collins",
         "George Michael", "Tina Turner", "Bob Marley", "Frank Sinatra", "Doja Cat",
-        "Christina Aguilera", "Jennifer Lopez", "Black Eyed Peas", "Roxette", "A-ha"
+        "Christina Aguilera", "Jennifer Lopez", "Black Eyed Peas", "Roxette", "A-ha",
+        "Chris de Burgh", "Chris Rea", "Kenny Rogers", "Air Supply", "Foreigner", "Bonnie Tyler", "Cyndi Lauper", "Michael Bolton", "Bryan Adams", "Eros Ramazzotti", "Laura Pausini", "Andrea Bocelli", "Julio Iglesias", "Gipsy Kings", "Barry White", "Sade", "Sting", "Rod Stewart", "Billy Joel", "Cher", "Donna Summer", "Boney M", "Rick Astley", "Duran Duran", "Spandau Ballet", "Simply Red", "Westlife", "Boyzone", "Ace of Base", "Savage Garden", "Kenny G", "Engelbert Humperdinck", "Diana Ross", "Neil Diamond", "Carpenters", "Bette Midler", "Lady in Red"
     )
 
     /** Ordem importa: o primeiro gênero que contiver o artista vence. */
