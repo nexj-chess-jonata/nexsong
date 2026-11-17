@@ -62,7 +62,7 @@ import androidx.media3.common.Player
 import br.com.nexj.nexsong.player.EqualizerManager
 import kotlinx.coroutines.delay
 
-enum class Screen { LIBRARY, PLAYER, QUEUE, EQUALIZER, LYRICS, EDITOR, ORGANIZE, SUGGESTIONS, GENRES, DUPLICATES }
+enum class Screen { LIBRARY, PLAYER, QUEUE, EQUALIZER, LYRICS, EDITOR, ORGANIZE, SUGGESTIONS, GENRES, DUPLICATES, TRASH }
 
 fun formatTime(ms: Long): String {
     val totalSeconds = (ms / 1000).coerceAtLeast(0)
@@ -97,8 +97,10 @@ fun NexSongRoot(vm: MainViewModel) {
             vm,
             onOpenPlayer = { screen = Screen.PLAYER },
             onOpenEditor = { screen = Screen.EDITOR },
-            onOpenOrganize = { screen = Screen.ORGANIZE }
+            onOpenOrganize = { screen = Screen.ORGANIZE },
+            onOpenTrash = { screen = Screen.TRASH }
         )
+        Screen.TRASH -> TrashScreen(vm, onBack = { screen = Screen.LIBRARY })
         Screen.ORGANIZE -> OrganizeScreen(
             vm = vm,
             onBack = {

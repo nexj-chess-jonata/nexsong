@@ -1,6 +1,7 @@
 package br.com.nexj.nexsong.ui
 
 import android.app.Activity
+import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.IntentSenderRequest
 import androidx.activity.result.contract.ActivityResultContracts
@@ -44,6 +45,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.ScrollableTabRow
@@ -92,12 +94,28 @@ fun LibraryScreen(
     vm: MainViewModel,
     onOpenPlayer: () -> Unit,
     onOpenEditor: () -> Unit,
-    onOpenOrganize: () -> Unit
+    onOpenOrganize: () -> Unit,
+    onOpenTrash: () -> Unit
 ) {
     var editing by remember { mutableStateOf<Song?>(null) }
     var selected by remember { mutableStateOf<Set<Long>>(emptySet()) }
     var showFilters by remember { mutableStateOf(false) }
     var bulkGenre by remember { mutableStateOf(false) }
+    var selecting by remember { mutableStateOf(false) }
+    var mainMenu by remember { mutableStateOf(false) }
+    val trashLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.StartIntentSenderForResult()
+    ) { result ->
+        if (result.resultCode == Activity.RESULT_OK) vm.confirmTrash() else vm.cancelTrash()
+    }
+    BackHandler(enabled = selecting) {
+        selected = emptySet()
+        selecting = false
+    }
+    val sendToTrash: (List<Song>) -> Unit = { list ->
+        val sender = vm.prepareTrash(list)
+        if (sender != null) trashLauncher.launch(IntentSenderRequest.Builder(sender).build())
+    }
     val moveLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.StartIntentSenderForResult()
     ) { result ->
@@ -117,22 +135,28 @@ fun LibraryScreen(
 
     Scaffold(
         topBar = {
-            if (selected.isNotEmpty()) {
+            if (selecting) {
                 TopAppBar(
                     title = { Text("${selected.size} selecionadas") },
                     navigationIcon = {
-                        IconButton(onClick = { selected = emptySet() }) {
+                        IconButton(onClick = {
+                            selected = emptySet()
+                            selecting = false
+                        }) {
                             Icon(Icons.Default.Close, contentDescription = "Cancelar seleção")
                         }
                     },
                     actions = {
                         TextButton(onClick = { selected = visible.map { it.id }.toSet() }) { Text("Todas") }
-                        TextButton(onClick = { bulkGenre = true }) { Text("Gênero") }
-                        TextButton(onClick = {
-                            vm.editingIds = selected
-                            selected = emptySet()
-                            onOpenEditor()
-                        }) { Text("Editar") }
+                        TextButton(
+                            enabled = selected.isNotEmpty(),
+                            onClick = {
+                                vm.editingIds = selected
+                                selected = emptySet()
+                                selecting = false
+                                onOpenEditor()
+                            }
+                        ) { Text("Editar") }
                     }
                 )
             } else {
@@ -142,19 +166,55 @@ fun LibraryScreen(
                         IconButton(onClick = { showFilters = true }) {
                             Icon(Icons.Default.FilterList, contentDescription = "Filtros e ordem")
                         }
-                        IconButton(onClick = { vm.loadSongs() }) {
-                            Icon(Icons.Default.Refresh, contentDescription = "Atualizar biblioteca")
+                        FilledTonalButton(onClick = onOpenOrganize) { Text("Organizar") }
+                        Box {
+                            IconButton(onClick = { mainMenu = true }) {
+                                Icon(Icons.Default.MoreVert, contentDescription = "Mais opções")
+                            }
+                            DropdownMenu(expanded = mainMenu, onDismissRequest = { mainMenu = false }) {
+                                DropdownMenuItem(
+                                    text = { Text("Selecionar várias") },
+                                    onClick = {
+                                        mainMenu = false
+                                        selecting = true
+                                    }
+                                )
+                                DropdownMenuItem(
+                                    text = { Text("Atualizar biblioteca") },
+                                    onClick = {
+                                        mainMenu = false
+                                        vm.loadSongs()
+                                    }
+                                )
+                                DropdownMenuItem(
+                                    text = { Text("Lixeira") },
+                                    onClick = {
+                                        mainMenu = false
+                                        onOpenTrash()
+                                    }
+                                )
+                            }
                         }
-                        FilledTonalButton(
-                            onClick = onOpenOrganize,
-                            modifier = Modifier.padding(end = 8.dp)
-                        ) { Text("Organizar") }
                     }
                 )
             }
         },
         bottomBar = {
-            if (vm.currentId != null) MiniPlayer(vm, onOpenPlayer)
+            if (selecting) {
+                SelectionBar(
+                    count = selected.size,
+                    canTrash = vm.canTrash,
+                    onGenre = { bulkGenre = true },
+                    onDelete = {
+                        val chosen = vm.songs.filter { it.id in selected }
+                        selected = emptySet()
+                        selecting = false
+                        sendToTrash(chosen)
+                    }
+                )
+            } else if (vm.currentId != null) {
+                MiniPlayer(vm, onOpenPlayer)
+            }
         }
     ) { padding ->
         Column(
@@ -201,13 +261,22 @@ fun LibraryScreen(
                             playing = song.id == vm.currentId,
                             selected = song.id in selected,
                             onClick = {
-                                if (selected.isNotEmpty()) {
+                                if (selecting) {
                                     selected = if (song.id in selected) selected - song.id else selected + song.id
                                 } else {
                                     vm.play(visible, index)
                                 }
                             },
-                            onLongClick = { selected = selected + song.id },
+                            onLongClick = {
+                                selecting = true
+                                selected = selected + song.id
+                            },
+                            canTrash = vm.canTrash,
+                            onSelect = {
+                                selecting = true
+                                selected = selected + song.id
+                            },
+                            onDelete = { sendToTrash(listOf(song)) },
                             onPlayNext = { vm.playNext(song) },
                             onAddToQueue = { vm.addToQueue(song) },
                             onEdit = {
@@ -243,6 +312,7 @@ fun LibraryScreen(
                 val chosen = vm.songs.filter { it.id in selected }
                 bulkGenre = false
                 selected = emptySet()
+                selecting = false
                 vm.setGenreForSongs(chosen, genre)
                 if (move) {
                     val sender = vm.prepareMoveSongs(chosen, genre)
@@ -267,6 +337,9 @@ private fun SongRow(
     selected: Boolean,
     onClick: () -> Unit,
     onLongClick: () -> Unit,
+    canTrash: Boolean,
+    onSelect: () -> Unit,
+    onDelete: () -> Unit,
     onPlayNext: () -> Unit,
     onAddToQueue: () -> Unit,
     onEdit: () -> Unit,
@@ -346,6 +419,57 @@ private fun SongRow(
                         onChangeGenre()
                     }
                 )
+                DropdownMenuItem(
+                    text = { Text("Selecionar várias") },
+                    onClick = {
+                        menuOpen = false
+                        onSelect()
+                    }
+                )
+                if (canTrash) {
+                    DropdownMenuItem(
+                        text = { Text("Apagar (lixeira)") },
+                        onClick = {
+                            menuOpen = false
+                            onDelete()
+                        }
+                    )
+                }
+            }
+        }
+    }
+}
+
+/** Barra de ações que aparece embaixo enquanto se selecionam várias músicas. */
+@Composable
+private fun SelectionBar(
+    count: Int,
+    canTrash: Boolean,
+    onGenre: () -> Unit,
+    onDelete: () -> Unit
+) {
+    Surface(tonalElevation = 3.dp, modifier = Modifier.fillMaxWidth()) {
+        Column(
+            Modifier
+                .navigationBarsPadding()
+                .padding(horizontal = 16.dp, vertical = 8.dp)
+        ) {
+            Text(
+                if (count == 0) "Toque nas músicas para marcar" else "$count músicas marcadas",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            Spacer(Modifier.height(4.dp))
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Button(
+                    enabled = count > 0,
+                    onClick = onGenre,
+                    modifier = Modifier.weight(1f)
+                ) { Text("Enviar para um gênero") }
+                if (canTrash) {
+                    Spacer(Modifier.width(8.dp))
+                    OutlinedButton(enabled = count > 0, onClick = onDelete) { Text("Apagar") }
+                }
             }
         }
     }

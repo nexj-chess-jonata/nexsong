@@ -48,6 +48,11 @@ class FolderOrganizer(private val context: Context) {
     fun deleteRequest(uris: List<Uri>): IntentSender =
         MediaStore.createDeleteRequest(context.contentResolver, uris).intentSender
 
+    /** Pede ao Android para mandar os arquivos para a lixeira (true) ou tirá-los de lá (false). Android 11+. */
+    @RequiresApi(Build.VERSION_CODES.R)
+    fun trashRequest(uris: List<Uri>, trash: Boolean): IntentSender =
+        MediaStore.createTrashRequest(context.contentResolver, uris, trash).intentSender
+
     suspend fun copy(
         songs: List<Song>,
         onProgress: (done: Int, total: Int) -> Unit

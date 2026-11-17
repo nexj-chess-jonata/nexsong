@@ -35,6 +35,7 @@ import br.com.nexj.nexsong.data.MediaScanner
 import br.com.nexj.nexsong.data.MoveLog
 import br.com.nexj.nexsong.data.Overrides
 import br.com.nexj.nexsong.data.ParsedLyrics
+import br.com.nexj.nexsong.data.TrashLog
 import br.com.nexj.nexsong.model.DurationFilter
 import br.com.nexj.nexsong.model.FormatFilter
 import br.com.nexj.nexsong.model.Genre
@@ -72,6 +73,7 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
     private val lyricsClient = LyricsClient()
     private val learned = Learned(app)
     private val duplicateStore = DuplicateStore(app)
+    private val trashLog = TrashLog(app)
 
     // ---- Biblioteca ----
     var songs by mutableStateOf<List<Song>>(emptyList())
@@ -115,6 +117,15 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
     var duplicateMessage by mutableStateOf("")
         private set
     private var pendingDelete: List<Long> = emptyList()
+
+    // ---- Lixeira ----
+    var trashItems by mutableStateOf(trashLog.all())
+        private set
+    var trashMessage by mutableStateOf("")
+        private set
+    private var pendingTrash: List<Song> = emptyList()
+    private var pendingRestore: List<Long> = emptyList()
+    private var pendingPurge: List<Long> = emptyList()
 
     // ---- Letras ----
     var lyrics by mutableStateOf<ParsedLyrics?>(null)
@@ -625,6 +636,104 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
 
     fun cancelDelete() {
         pendingDelete = emptyList()
+    }
+
+    // =====================================================================
+    // Apagar e lixeira (Android 11+)
+    // =====================================================================
+
+    val canTrash: Boolean
+        get() = Build.VERSION.SDK_INT >= Build.VERSION_CODES.R
+
+    /** Pede ao Android para mandar as músicas para a lixeira. O Android mostra a confirmação. */
+    fun prepareTrash(list: List<Song>): IntentSender? {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.R || list.isEmpty()) return null
+        return try {
+            val sender = organizer.trashRequest(list.map { it.uri }, true)
+            pendingTrash = list
+            sender
+        } catch (e: Exception) {
+            trashMessage = "Não foi possível pedir a confirmação ao Android."
+            null
+        }
+    }
+
+    fun confirmTrash() {
+        val list = pendingTrash
+        pendingTrash = emptyList()
+        if (list.isEmpty()) return
+        val ids = list.map { it.id }.toSet()
+        trashLog.add(list)
+        trashItems = trashLog.all()
+        moveLog.remove(ids.toList())
+        undoCount = moveLog.count()
+        songs = songs.filter { it.id !in ids }
+        trashMessage = "${ids.size} músicas foram para a lixeira."
+        refreshDuplicates()
+    }
+
+    fun refreshTrash() {
+        trashItems = trashLog.all()
+    }
+
+    /** Tira as músicas da lixeira e devolve para a biblioteca. */
+    fun prepareRestore(ids: List<Long>): IntentSender? {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.R || ids.isEmpty()) return null
+        return try {
+            val sender = organizer.trashRequest(ids.map { organizer.audioUri(it) }, false)
+            pendingRestore = ids
+            sender
+        } catch (e: Exception) {
+            trashMessage = "Não foi possível restaurar. O arquivo pode já ter sido apagado."
+            null
+        }
+    }
+
+    fun confirmRestore() {
+        val ids = pendingRestore
+        pendingRestore = emptyList()
+        if (ids.isEmpty()) return
+        trashLog.remove(ids)
+        trashItems = trashLog.all()
+        trashMessage = "${ids.size} músicas restauradas."
+        loadSongs()
+    }
+
+    /** Apaga de vez as músicas que estão na lixeira. Não dá para desfazer. */
+    fun preparePurge(ids: List<Long>): IntentSender? {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.R || ids.isEmpty()) return null
+        return try {
+            val sender = organizer.deleteRequest(ids.map { organizer.audioUri(it) })
+            pendingPurge = ids
+            sender
+        } catch (e: Exception) {
+            trashMessage = "Não foi possível apagar. O arquivo pode já ter sido apagado."
+            null
+        }
+    }
+
+    fun confirmPurge() {
+        val ids = pendingPurge
+        pendingPurge = emptyList()
+        if (ids.isEmpty()) return
+        trashLog.remove(ids)
+        trashItems = trashLog.all()
+        for (id in ids) lyricsStore.delete(id)
+        lyricsIds = lyricsIds - ids.toSet()
+        trashMessage = "${ids.size} músicas apagadas de vez."
+    }
+
+    /** Tira da lista itens que não existem mais (por exemplo, apagados por outro app). */
+    fun forgetTrashItems(ids: List<Long>) {
+        trashLog.remove(ids)
+        trashItems = trashLog.all()
+        trashMessage = ""
+    }
+
+    fun cancelTrash() {
+        pendingTrash = emptyList()
+        pendingRestore = emptyList()
+        pendingPurge = emptyList()
     }
 
     // =====================================================================
